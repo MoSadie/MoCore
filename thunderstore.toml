@@ -1,0 +1,34 @@
+[config]
+schemaVersion = "0.0.1"
+
+[package]
+namespace = "MoSadie"
+name = "MoCore"
+versionNumber = "1.0.0"
+description = "Common plugin across MoSadie's plugins"
+websiteUrl = "https://github.com/MoSadie/MoCore"
+containsNsfwContent = false
+[package.dependencies]
+BepInEx-BepInExPack= "5.4.2100"
+
+
+[build]
+icon = "./icon.png"
+readme = "./README.md"
+outdir = "./build"
+
+[[build.copy]]
+source = "./MoCore/bin/Release/netstandard2.1/com.mosadie.mocore.dll"
+target = "BepInEx/plugins/MoSadie-MoCore/com.mosadie.mocore.dll"
+
+[[build.copy]]
+source = "./CHANGELOG.md"
+target = "./CHANGELOG.md"
+
+[publish]
+repository = "https://thunderstore.io"
+communities = [ "slipstream-rogue-space", ]
+[publish.categories]
+slipstream-rogue-space = [ "mods" ]
+
+
