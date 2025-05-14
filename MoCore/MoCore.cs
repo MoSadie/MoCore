@@ -16,9 +16,13 @@ namespace MoCore
     {
         private static ConfigEntry<bool> overrideVersionCheck;
 
+        private static ConfigEntry<int> httpServerPort;
+
         private static HttpClient httpClient = new HttpClient();
 
         private static List<MoPlugin> plugins = new List<MoPlugin>();
+
+        private static Dictionary<string, MoHttpHandler> httpHandlers = new Dictionary<string, MoHttpHandler>();
 
         internal static ManualLogSource Log;
         private void Awake()
@@ -30,6 +34,8 @@ namespace MoCore
                 Log.LogInfo($"Game version: {Application.version}");
 
                 overrideVersionCheck = Config.Bind("BE CAREFUL", "Override Version Check", false, "This will allow my plugins to run on any version of Slipstream, skipping the version checker. Use at your own risk.");
+
+                httpServerPort = Config.Bind("HTTP", "HTTP Server Port", 8001, "The port to use for the HTTP server. This is used for any web requests plugins wish to accept.");
 
                 httpClient.Timeout = TimeSpan.FromSeconds(5);
 
@@ -49,7 +55,7 @@ namespace MoCore
          * @param plugin The plugin to register
          * @returns true if the plugin should continue to load, false otherwise.
          */
-        public static bool RegisterPlugin(MoPlugin plugin)
+        public static bool RegisterPlugin(MoPlugin plugin, MoHttpHandler httpHandler = null)
         {
             Log.LogInfo($"Registering plugin {PluginName(plugin)} ({PluginId(plugin)})");
             Log.LogInfo($"Version: {PluginVersion(plugin)}");
@@ -57,7 +63,7 @@ namespace MoCore
             if (overrideVersionCheck.Value)
             {
                 Log.LogInfo("Version check override is enabled. Skipping version check.");
-                return true;
+                return httpHandler != null ? RegisterHttpHandler(httpHandler, plugin) : true;
             }
 
             if (plugin.GetVersionCheckUrl() != null)
@@ -71,12 +77,80 @@ namespace MoCore
 
             Log.LogInfo($"Plugin {PluginName(plugin)} ({PluginId(plugin)}) is compatible with this version of the game ({Application.version}).");
             plugins.Add(plugin);
+            return httpHandler != null ? RegisterHttpHandler(httpHandler, plugin) : true;
+        }
+
+        /**
+         * Register a MoHttpHandler with MoCore.
+         * 
+         * @param httpHandler The MoHttpHandler to register
+         * @param plugin The plugin that this handler is for
+         * 
+         * @returns true if the handler was registered successfully, false otherwise.
+         */
+        private static bool RegisterHttpHandler(MoHttpHandler httpHandler, MoPlugin plugin)
+        {
+            Log.LogInfo($"Attempting to register http handler {httpHandler.getPrefix()} for plugin {PluginName(plugin)} ({PluginId(plugin)})");
+            if (httpHandler == null)
+            {
+                Log.LogDebug($"HttpHandler is null. Skipping");
+                return true;
+            }
+
+            if (plugin == null)
+            {
+                Log.LogError($"Plugin is null. Skipping");
+                return false;
+            }
+
+            if (httpHandler.getPrefix() == null)
+            {
+                Log.LogError($"HttpHandler prefix is null. Skipping");
+                return false;
+            }
+
+            if (httpHandler.getPrefix().Length == 0)
+            {
+                Log.LogError($"HttpHandler prefix is empty. Skipping");
+                return false;
+            }
+
+            if (httpHandler.getPrefix().Contains(" "))
+            {
+                Log.LogError($"HttpHandler prefix contains spaces. Skipping");
+                return false;
+            }
+
+            if (httpHandler.getPrefix().Contains("/"))
+            {
+                Log.LogError($"HttpHandler prefix contains slashes. Skipping");
+                return false;
+            }
+
+            if (httpHandlers.ContainsKey(httpHandler.getPrefix()))
+            {
+                Log.LogError($"HttpHandler prefix {httpHandler.getPrefix()} is already registered. Skipping");
+                return false;
+            }
+
+            Log.LogInfo($"Registering http handler {httpHandler.getPrefix()} for plugin {PluginName(plugin)} ({PluginId(plugin)})");
+            httpHandlers.Add(httpHandler.getPrefix(), httpHandler);
             return true;
+        }
+
+        public static bool isRegisteredPlugin(MoPlugin plugin)
+        {
+            return plugins.Contains(plugin);
         }
 
         public static List<MoPlugin> GetPlugins()
         {
-            return plugins;
+            return new List<MoPlugin>(plugins);
+        }
+
+        internal static Dictionary<string, MoHttpHandler> GetHttpHandlers()
+        {
+            return httpHandlers;
         }
 
         private static bool VersionCheck(MoPlugin plugin, string gameVersion)
