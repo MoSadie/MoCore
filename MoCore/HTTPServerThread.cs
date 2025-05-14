@@ -63,7 +63,7 @@ namespace MoCore
                     {
                         MoHttpHandler handler = handlers[prefix];
                         MoCore.Log.LogInfo($"HTTP request handled by {handler.getPrefix()}");
-                        response = handler.handleRequest(request, response); //FIXME  This is where I left off for the night
+                        response = handler.handleRequest(request, response);
                     }
                     else
                     {
