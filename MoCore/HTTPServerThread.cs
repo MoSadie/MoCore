@@ -8,15 +8,12 @@ namespace MoCore
 {
     internal class HTTPServerThread
     {
-        private MoCore moCore;
-
         private HttpListener httpListener;
 
         private Thread thread = null;
 
-        internal HTTPServerThread(MoCore moCore, int port)
+        internal HTTPServerThread(int port)
         {
-            this.moCore = moCore;
             httpListener = new HttpListener();
             httpListener.Prefixes.Add($"http://localhost:{port}/");
             httpListener.Prefixes.Add($"http://127.0.0.1:{port}/");
@@ -24,13 +21,21 @@ namespace MoCore
 
         internal void StartListening()
         {
-            if (thread != null)
+            try
             {
-                MoCore.Log.LogError("HTTP server thread is already running.");
-                return;
+
+                if (thread != null)
+                {
+                    MoCore.Log.LogError("HTTP server thread is already running.");
+                    return;
+                }
+                thread = new Thread(() => startThread(httpListener));
+                thread.Start();
             }
-            thread = new Thread(() => startThread(httpListener));
-            thread.Start();
+            catch (Exception e)
+            {
+                MoCore.Log.LogError($"Failed to start HTTP server thread: {e.Message}");
+            }
         }
 
         private void startThread(HttpListener httpListener)

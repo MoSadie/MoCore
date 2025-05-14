@@ -12,7 +12,7 @@ namespace MoCore
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     [BepInProcess("Slipstream_Win.exe")]
-    public class MoCore : BaseUnityPlugin
+    public class MoCore : BaseUnityPlugin, MoPlugin
     {
         private static ConfigEntry<bool> overrideVersionCheck;
 
@@ -24,7 +24,17 @@ namespace MoCore
 
         private static Dictionary<string, MoHttpHandler> httpHandlers = new Dictionary<string, MoHttpHandler>();
 
+        private static HTTPServerThread httpServerThread = null;
+
         internal static ManualLogSource Log;
+
+        // Information for registering ourselves
+        public static readonly string COMPATIBLE_GAME_VERSION = "4.1595";
+        public static readonly string GAME_VERSION_URL = "https://raw.githubusercontent.com/MoSadie/MoCore/refs/heads/main/versions.json";
+
+        // Used for HttpHandler
+        private MoCoreHttpHandler moCoreHttpHandler;
+
         private void Awake()
         {
             try
@@ -39,6 +49,15 @@ namespace MoCore
 
                 httpClient.Timeout = TimeSpan.FromSeconds(5);
 
+                httpServerThread = new HTTPServerThread(httpServerPort.Value);
+
+                httpServerThread.StartListening();
+
+                moCoreHttpHandler = new MoCoreHttpHandler(this);
+
+                // Register ourselves! (Note: Your plugin should do this first thing in Awake, but MoCore does this later since we need to setup the registration system first)
+                RegisterPlugin(this);
+
                 // Plugin startup logic
                 Log.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
             }
@@ -50,20 +69,24 @@ namespace MoCore
         }
 
         /**
-         * Register a plugin with MoCore, also checks if the plugin is compatible with the current game version.
+         * Register a plugin with MoCore, and does the following:
+         * - (If not skipped) Check plugin version acceptable versions against game version
+         * - (If enabled) Register the plugin's HTTP handler
          * 
          * @param plugin The plugin to register
-         * @returns true if the plugin should continue to load, false otherwise.
+         * @param skipVersionCheck If true, skip the version check.
+         * @returns true if plugin registered correctly, false otherwise. (If false: continuing to load plugin may lead to issues
          */
-        public static bool RegisterPlugin(MoPlugin plugin, MoHttpHandler httpHandler = null)
+        public static bool RegisterPlugin(MoPlugin plugin, bool skipVersionCheck = false)
         {
             Log.LogInfo($"Registering plugin {PluginName(plugin)} ({PluginId(plugin)})");
             Log.LogInfo($"Version: {PluginVersion(plugin)}");
 
-            if (overrideVersionCheck.Value)
+            if (overrideVersionCheck.Value || skipVersionCheck)
             {
-                Log.LogInfo("Version check override is enabled. Skipping version check.");
-                return httpHandler != null ? RegisterHttpHandler(httpHandler, plugin) : true;
+                Log.LogWarning("Version check override is enabled. Skipping version check.");
+                plugins.Add(plugin);
+                return RegisterHttpHandler(plugin);
             }
 
             if (plugin.GetVersionCheckUrl() != null)
@@ -77,31 +100,34 @@ namespace MoCore
 
             Log.LogInfo($"Plugin {PluginName(plugin)} ({PluginId(plugin)}) is compatible with this version of the game ({Application.version}).");
             plugins.Add(plugin);
-            return httpHandler != null ? RegisterHttpHandler(httpHandler, plugin) : true;
+            return RegisterHttpHandler(plugin);
         }
 
         /**
          * Register a MoHttpHandler with MoCore.
+         * Will automatically skip if the plugin does not request the feature.
          * 
-         * @param httpHandler The MoHttpHandler to register
-         * @param plugin The plugin that this handler is for
+         * @param plugin The plugin which can provide the handler.
          * 
          * @returns true if the handler was registered successfully, false otherwise.
          */
-        private static bool RegisterHttpHandler(MoHttpHandler httpHandler, MoPlugin plugin)
+        private static bool RegisterHttpHandler(MoPlugin plugin)
         {
-            Log.LogInfo($"Attempting to register http handler {httpHandler.getPrefix()} for plugin {PluginName(plugin)} ({PluginId(plugin)})");
+            if (plugin == null)
+            {
+                Log.LogError("Attempted to RegisterHttpHandler with a null plugin!!!");
+                return false;
+            }
+
+            MoHttpHandler httpHandler = plugin.GetHttpHandler();
+
             if (httpHandler == null)
             {
-                Log.LogDebug($"HttpHandler is null. Skipping");
+                Log.LogDebug($"HttpHandler is null for plugin {PluginName(plugin)} ({PluginId(plugin)}). Skipping (this is normal, null means does not need feature)");
                 return true;
             }
 
-            if (plugin == null)
-            {
-                Log.LogError($"Plugin is null. Skipping");
-                return false;
-            }
+            Log.LogInfo($"Attempting to register http handler {httpHandler.getPrefix()} for plugin {PluginName(plugin)} ({PluginId(plugin)})");
 
             if (httpHandler.getPrefix() == null)
             {
@@ -207,6 +233,27 @@ namespace MoCore
         private static String PluginVersion(MoPlugin plugin)
         {
             return plugin.GetPluginObject().Info.Metadata.Version.ToString();
+        }
+
+        // From MoPlugin
+        public String GetCompatibleGameVersion()
+        {
+            return COMPATIBLE_GAME_VERSION;
+        }
+
+        public String GetVersionCheckUrl()
+        {
+            return GAME_VERSION_URL;
+        }
+
+        public BaseUnityPlugin GetPluginObject()
+        {
+            return this;
+        }
+
+        public MoHttpHandler GetHttpHandler()
+        {
+            return moCoreHttpHandler;
         }
     }
 }
