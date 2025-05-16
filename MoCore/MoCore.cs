@@ -12,7 +12,7 @@ namespace MoCore
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     [BepInProcess("Slipstream_Win.exe")]
-    public class MoCore : BaseUnityPlugin, MoPlugin
+    public class MoCore : BaseUnityPlugin, IMoPlugin
     {
         private static ConfigEntry<bool> overrideVersionCheck;
 
@@ -20,9 +20,9 @@ namespace MoCore
 
         private static HttpClient httpClient = new HttpClient();
 
-        private static List<MoPlugin> plugins = new List<MoPlugin>();
+        private static List<IMoPlugin> plugins = new List<IMoPlugin>();
 
-        private static Dictionary<string, MoHttpHandler> httpHandlers = new Dictionary<string, MoHttpHandler>();
+        private static Dictionary<string, IMoHttpHandler> httpHandlers = new Dictionary<string, IMoHttpHandler>();
 
         private static HTTPServerThread httpServerThread = null;
 
@@ -34,6 +34,8 @@ namespace MoCore
 
         // Used for HttpHandler
         private MoCoreHttpHandler moCoreHttpHandler;
+
+        public static bool IsSafe { get; private set; } = false;
 
         private void Awake()
         {
@@ -56,7 +58,7 @@ namespace MoCore
                 moCoreHttpHandler = new MoCoreHttpHandler(this);
 
                 // Register ourselves! (Note: Your plugin should do this first thing in Awake, but MoCore does this later since we need to setup the registration system first)
-                RegisterPlugin(this);
+                IsSafe = RegisterPlugin(this);
 
                 // Plugin startup logic
                 Log.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
@@ -75,9 +77,9 @@ namespace MoCore
          * 
          * @param plugin The plugin to register
          * @param skipVersionCheck If true, skip the version check.
-         * @returns true if plugin registered correctly, false otherwise. (If false: continuing to load plugin may lead to issues
+         * @returns true if plugin registered correctly, false otherwise. (If false: continuing to load plugin may lead to issues)
          */
-        public static bool RegisterPlugin(MoPlugin plugin, bool skipVersionCheck = false)
+        public static bool RegisterPlugin(IMoPlugin plugin, bool skipVersionCheck = false)
         {
             Log.LogInfo($"Registering plugin {PluginName(plugin)} ({PluginId(plugin)})");
             Log.LogInfo($"Version: {PluginVersion(plugin)}");
@@ -111,7 +113,7 @@ namespace MoCore
          * 
          * @returns true if the handler was registered successfully, false otherwise.
          */
-        private static bool RegisterHttpHandler(MoPlugin plugin)
+        private static bool RegisterHttpHandler(IMoPlugin plugin)
         {
             if (plugin == null)
             {
@@ -119,7 +121,7 @@ namespace MoCore
                 return false;
             }
 
-            MoHttpHandler httpHandler = plugin.GetHttpHandler();
+            IMoHttpHandler httpHandler = plugin.GetHttpHandler();
 
             if (httpHandler == null)
             {
@@ -127,59 +129,59 @@ namespace MoCore
                 return true;
             }
 
-            Log.LogInfo($"Attempting to register http handler {httpHandler.getPrefix()} for plugin {PluginName(plugin)} ({PluginId(plugin)})");
+            Log.LogInfo($"Attempting to register http handler {httpHandler.GetPrefix()} for plugin {PluginName(plugin)} ({PluginId(plugin)})");
 
-            if (httpHandler.getPrefix() == null)
+            if (httpHandler.GetPrefix() == null)
             {
                 Log.LogError($"HttpHandler prefix is null. Skipping");
                 return false;
             }
 
-            if (httpHandler.getPrefix().Length == 0)
+            if (httpHandler.GetPrefix().Length == 0)
             {
                 Log.LogError($"HttpHandler prefix is empty. Skipping");
                 return false;
             }
 
-            if (httpHandler.getPrefix().Contains(" "))
+            if (httpHandler.GetPrefix().Contains(" "))
             {
                 Log.LogError($"HttpHandler prefix contains spaces. Skipping");
                 return false;
             }
 
-            if (httpHandler.getPrefix().Contains("/"))
+            if (httpHandler.GetPrefix().Contains("/"))
             {
                 Log.LogError($"HttpHandler prefix contains slashes. Skipping");
                 return false;
             }
 
-            if (httpHandlers.ContainsKey(httpHandler.getPrefix()))
+            if (httpHandlers.ContainsKey(httpHandler.GetPrefix()))
             {
-                Log.LogError($"HttpHandler prefix {httpHandler.getPrefix()} is already registered. Skipping");
+                Log.LogError($"HttpHandler prefix {httpHandler.GetPrefix()} is already registered. Skipping");
                 return false;
             }
 
-            Log.LogInfo($"Registering http handler {httpHandler.getPrefix()} for plugin {PluginName(plugin)} ({PluginId(plugin)})");
-            httpHandlers.Add(httpHandler.getPrefix(), httpHandler);
+            Log.LogInfo($"Registering http handler {httpHandler.GetPrefix()} for plugin {PluginName(plugin)} ({PluginId(plugin)})");
+            httpHandlers.Add(httpHandler.GetPrefix(), httpHandler);
             return true;
         }
 
-        public static bool isRegisteredPlugin(MoPlugin plugin)
+        public static bool IsRegisteredPlugin(IMoPlugin plugin)
         {
             return plugins.Contains(plugin);
         }
 
-        public static List<MoPlugin> GetPlugins()
+        public static List<IMoPlugin> GetPlugins()
         {
-            return new List<MoPlugin>(plugins);
+            return new List<IMoPlugin>(plugins);
         }
 
-        internal static Dictionary<string, MoHttpHandler> GetHttpHandlers()
+        internal static Dictionary<string, IMoHttpHandler> GetHttpHandlers()
         {
             return httpHandlers;
         }
 
-        private static bool VersionCheck(MoPlugin plugin, string gameVersion)
+        private static bool VersionCheck(IMoPlugin plugin, string gameVersion)
         {
             try
             {
@@ -220,17 +222,17 @@ namespace MoCore
             }
         }
 
-        private static String PluginName(MoPlugin plugin)
+        private static String PluginName(IMoPlugin plugin)
         {
             return plugin.GetPluginObject().Info.Metadata.Name;
         }
 
-        private static String PluginId(MoPlugin plugin)
+        private static String PluginId(IMoPlugin plugin)
         {
             return plugin.GetPluginObject().Info.Metadata.GUID;
         }
 
-        private static String PluginVersion(MoPlugin plugin)
+        private static String PluginVersion(IMoPlugin plugin)
         {
             return plugin.GetPluginObject().Info.Metadata.Version.ToString();
         }
@@ -251,7 +253,7 @@ namespace MoCore
             return this;
         }
 
-        public MoHttpHandler GetHttpHandler()
+        public IMoHttpHandler GetHttpHandler()
         {
             return moCoreHttpHandler;
         }

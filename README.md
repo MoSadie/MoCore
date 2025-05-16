@@ -63,14 +63,3 @@ Here is a example of what the version json file looks like:
     ]
 }
 ```
-
-# TODO LIST FOR v2
-
-- [ ] Add HTTP Server to allow plugins to handle HTTP requests
-    - [ ] Add Server Thread
-	- [ ] Add handler interface
-	- [ ] Add handler registration
-	- [ ] Make everything work
-	- [ ] Documentation for how to use
-- [ ] Move/Copy Variable system from SlipChat to MoCore
-- [ ] TEST EVERYTHING

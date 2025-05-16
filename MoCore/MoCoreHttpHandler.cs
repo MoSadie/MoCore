@@ -9,7 +9,7 @@ namespace MoCore
      * An example implementation of MoHttpHandler,
      * supports a few different paths
      */
-    internal class MoCoreHttpHandler : MoHttpHandler
+    internal class MoCoreHttpHandler : IMoHttpHandler
     {
         private MoCore moCore;
 
@@ -18,17 +18,18 @@ namespace MoCore
             this.moCore = moCore;
         }
 
-        public string getPrefix()
+        public string GetPrefix()
         {
             return "mocore";
         }
 
-        public System.Net.HttpListenerResponse handleRequest(System.Net.HttpListenerRequest request, System.Net.HttpListenerResponse response)
+        public System.Net.HttpListenerResponse HandleRequest(System.Net.HttpListenerRequest request, System.Net.HttpListenerResponse response)
         {
             // paths:
             // mocore/version
             // mocore/plugins
             // mocore/plugin/{pluginGUID}
+            // mocore/variable/parse?string={message}
 
             string path = request.Url.AbsolutePath.Trim('/');
             string[] parts = path.Split('/');
@@ -52,7 +53,7 @@ namespace MoCore
             else if (parts[1] == "plugins")
             {
                 List<JsonPluginInfo> list = new List<JsonPluginInfo>();
-                foreach (MoPlugin plugin in MoCore.GetPlugins())
+                foreach (IMoPlugin plugin in MoCore.GetPlugins())
                 {
                     list.Add(new JsonPluginInfo(plugin));
                 }
@@ -69,8 +70,8 @@ namespace MoCore
             }
             else if (parts[1] == "plugin" && parts.Length > 2)
             {
-                MoPlugin plugin = null;
-                foreach (MoPlugin p in MoCore.GetPlugins())
+                IMoPlugin plugin = null;
+                foreach (IMoPlugin p in MoCore.GetPlugins())
                 {
                     if (p.GetPluginObject().Info.Metadata.GUID == parts[2])
                     {
@@ -96,6 +97,36 @@ namespace MoCore
                     response.StatusCode = 404;
                 }
             }
+            else if (parts[1] == "variable" && parts.Length > 2 && parts[2] == "parse")
+            {
+                if (!MoCore.IsSafe)
+                {
+                    response.StatusCode = 503;
+                    response.Headers.Add("Access-Control-Allow-Origin", "*");
+                    return response;
+                }
+
+                string message = request.QueryString["string"];
+                if (message != null)
+                {
+                    string parsedMessage = VariableHandler.ParseVariables(message);
+                    if (parsedMessage == null)
+                    {
+                        response.StatusCode = 500;
+                        response.Headers.Add("Access-Control-Allow-Origin", "*");
+                        return response;
+                    }
+                    response.StatusCode = 200;
+                    response.Headers.Add("Access-Control-Allow-Origin", "*");
+                    byte[] buffer = System.Text.Encoding.UTF8.GetBytes(parsedMessage);
+                    response.ContentLength64 = buffer.Length;
+                    response.OutputStream.Write(buffer, 0, buffer.Length);
+                }
+                else
+                {
+                    response.StatusCode = 400;
+                }
+            }
             else
             {
                 response.StatusCode = 404;
@@ -114,7 +145,7 @@ namespace MoCore
 
             public string FallbackGameVersion { get; set; }
 
-            internal JsonPluginInfo(MoPlugin plugin)
+            internal JsonPluginInfo(IMoPlugin plugin)
             {
                 Name = plugin.GetPluginObject().Info.Metadata.Name;
                 Version = plugin.GetPluginObject().Info.Metadata.Version.ToString();

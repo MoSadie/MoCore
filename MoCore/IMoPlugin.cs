@@ -5,7 +5,7 @@ using System.Text;
 
 namespace MoCore
 {
-    public interface MoPlugin
+    public interface IMoPlugin
     {
         public String GetCompatibleGameVersion();
         public String GetVersionCheckUrl();
@@ -16,7 +16,7 @@ namespace MoCore
          * 
          * Multiple calls should result in the same object each time.
          */
-        public MoHttpHandler GetHttpHandler();
+        public IMoHttpHandler GetHttpHandler();
 
         public BaseUnityPlugin GetPluginObject();
     }

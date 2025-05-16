@@ -29,7 +29,7 @@ namespace MoCore
                     MoCore.Log.LogError("HTTP server thread is already running.");
                     return;
                 }
-                thread = new Thread(() => startThread(httpListener));
+                thread = new Thread(() => StartThread(httpListener));
                 thread.Start();
             }
             catch (Exception e)
@@ -38,7 +38,7 @@ namespace MoCore
             }
         }
 
-        private void startThread(HttpListener httpListener)
+        private void StartThread(HttpListener httpListener)
         {
             try
             {
@@ -57,13 +57,13 @@ namespace MoCore
 
                     MoCore.Log.LogInfo($"HTTP request received: Prefix:{prefix} {path}");
 
-                    Dictionary<string, MoHttpHandler> handlers = MoCore.GetHttpHandlers();
+                    Dictionary<string, IMoHttpHandler> handlers = MoCore.GetHttpHandlers();
 
                     if (handlers.ContainsKey(prefix))
                     {
-                        MoHttpHandler handler = handlers[prefix];
-                        MoCore.Log.LogInfo($"HTTP request handled by {handler.getPrefix()}");
-                        response = handler.handleRequest(request, response);
+                        IMoHttpHandler handler = handlers[prefix];
+                        MoCore.Log.LogInfo($"HTTP request handled by {handler.GetPrefix()}");
+                        response = handler.HandleRequest(request, response);
                     }
                     else
                     {

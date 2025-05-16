@@ -33,6 +33,15 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="GameAssembly">
+      <HintPath>lib/Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="GameAssembly">
+      <HintPath>lib/UniTask.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Message Text="Packaging using tcli..." />
     <Exec Command="tcli build --package-version $(MinVerMajor).$(MinVerMinor).$(MinVerPatch)" WorkingDirectory=".." />

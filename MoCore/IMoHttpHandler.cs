@@ -2,13 +2,13 @@
 
 namespace MoCore
 {
-    public interface MoHttpHandler
+    public interface IMoHttpHandler
     {
         /**
          * The Prefix used in http requests to this handler.
          * For example the prefix slipinfo would translate to a path like localhost:8001/slipinfo/whatever
          */
-        public string getPrefix();
+        public string GetPrefix();
 
         /**
          * The method that will be called when a request is made to this handler.
@@ -18,6 +18,6 @@ namespace MoCore
          * 
          * @returns The response, after the handler is done writing to it. 
          */
-        public HttpListenerResponse handleRequest(HttpListenerRequest request, HttpListenerResponse response);
+        public HttpListenerResponse HandleRequest(HttpListenerRequest request, HttpListenerResponse response);
     }
 }
