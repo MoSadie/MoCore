@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace MoCore
 {
-    internal class VariableHandler
+    public class VariableHandler
     {
         /**
          * <returns>The parsed version of the string, or null if we were unable to.</returns>
