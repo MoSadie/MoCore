@@ -4,7 +4,6 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "MoSadie"
 name = "MoCore"
-versionNumber = "1.0.0"
 description = "Common plugin across MoSadie's plugins"
 websiteUrl = "https://github.com/MoSadie/MoCore"
 containsNsfwContent = false
