@@ -35,6 +35,12 @@ namespace MoCore
         // Used for HttpHandler
         private MoCoreHttpHandler moCoreHttpHandler;
 
+        /**
+         * <summary>
+         * <para>True if MoCore is compatible with the current version of Slipstream: Rogue Space.</para>
+         * <para>If false, some features that interact with the game directly may not work. (Such as variable parsing)</para>
+         * </summary>
+         */
         public static bool IsSafe { get; private set; } = false;
 
         private void Awake()
@@ -71,16 +77,32 @@ namespace MoCore
         }
 
         /**
-         * Register a plugin with MoCore, and does the following:
-         * - (If not skipped) Check plugin version acceptable versions against game version
-         * - (If enabled) Register the plugin's HTTP handler
+         * <summary>
+         * <para>Register a plugin with MoCore, and does the following:</para>
+         * <para>- (If not skipped) Check plugin version acceptable versions against game version</para>
+         * <para>- (If enabled) Register the plugin's HTTP handler (See <see cref="IMoPlugin.GetHttpHandler"/>)</para>
          * 
-         * @param plugin The plugin to register
-         * @param skipVersionCheck If true, skip the version check.
-         * @returns true if plugin registered correctly, false otherwise. (If false: continuing to load plugin may lead to issues)
+         * </summary>
+         * <param name="plugin">The plugin to register</param>
+         * <param name="skipVersionCheck">If true, skip the version check.</param>
+         * 
+         * <returns>true if plugin registered correctly, false otherwise. (If false: continuing to load plugin may lead to issues)</returns>
          */
         public static bool RegisterPlugin(IMoPlugin plugin, bool skipVersionCheck = false)
         {
+            if (plugin == null)
+            {
+                Log.LogError("Attempted to register a null plugin!!!");
+                Log.LogError($"Stacktrace: {Environment.StackTrace}");
+                return false;
+            }
+
+            if (IsRegisteredPlugin(plugin))
+            {
+                Log.LogError($"Plugin {PluginName(plugin)} ({PluginId(plugin)}) is already registered. Skipping.");
+                return false;
+            }
+
             Log.LogInfo($"Registering plugin {PluginName(plugin)} ({PluginId(plugin)})");
             Log.LogInfo($"Version: {PluginVersion(plugin)}");
 
@@ -106,12 +128,16 @@ namespace MoCore
         }
 
         /**
+         * <summary>
+         * <para>
          * Register a MoHttpHandler with MoCore.
          * Will automatically skip if the plugin does not request the feature.
+         * </para>
+         * </summary>
          * 
-         * @param plugin The plugin which can provide the handler.
+         * <param name="plugin">The plugin which can provide the handler.</param>
          * 
-         * @returns true if the handler was registered successfully, false otherwise.
+         * <returns>true if the handler was registered successfully, false otherwise.</returns> 
          */
         private static bool RegisterHttpHandler(IMoPlugin plugin)
         {
@@ -166,21 +192,48 @@ namespace MoCore
             return true;
         }
 
+        /**
+         * <summary>
+         * Check if a plugin object is registered with MoCore.
+         * </summary>
+         * <returns>True if the plugin object is registered, false otherweise.</returns>
+         */
         public static bool IsRegisteredPlugin(IMoPlugin plugin)
         {
             return plugins.Contains(plugin);
         }
 
+        /**
+         * <summary>
+         * Get a list of all registered plugins.
+         * </summary>
+         * <returns>A list of all registered plugins.</returns>
+         */
         public static List<IMoPlugin> GetPlugins()
         {
             return new List<IMoPlugin>(plugins);
         }
 
+        /**
+         * <summary>
+         * Get a dictionary of all registered HTTP handlers.
+         * </summary>
+         * <returns>A dictionary of all registered HTTP handlers.</returns>
+         */
         internal static Dictionary<string, IMoHttpHandler> GetHttpHandlers()
         {
             return httpHandlers;
         }
 
+        /**
+         * <summary>
+         * Check online if a plugin is compatible with the current version of Slipstream: Rogue Space.
+         * </summary>
+         * <param name="plugin">The plugin to check.</param>
+         * <param name="gameVersion">The current game version, as a fallback.</param>
+         * 
+         * <returns>True if the plugin is compatible, false otherwise.</returns>
+         */
         private static bool VersionCheck(IMoPlugin plugin, string gameVersion)
         {
             try
@@ -222,22 +275,46 @@ namespace MoCore
             }
         }
 
+        /**
+         * <summary>
+         * Get the name of the plugin.
+         * </summary>
+         * <param name="plugin">The plugin to get the name of.</param>
+         * 
+         * <returns>The name of the plugin.</returns>
+         */
         private static String PluginName(IMoPlugin plugin)
         {
             return plugin.GetPluginObject().Info.Metadata.Name;
         }
 
+        /**
+         * <summary>
+         * Get the GUID of the plugin.
+         * </summary>
+         * <param name="plugin">The plugin to get the GUID of.</param>
+         * 
+         * <returns>The GUID of the plugin.</returns>
+         */
         private static String PluginId(IMoPlugin plugin)
         {
             return plugin.GetPluginObject().Info.Metadata.GUID;
         }
 
+        /**
+         * <summary>
+         * Get the version of the plugin.
+         * </summary>
+         * <param name="plugin">The plugin to get the version of.</param>
+         * 
+         * <returns>The version of the plugin.</returns>
+         */
         private static String PluginVersion(IMoPlugin plugin)
         {
             return plugin.GetPluginObject().Info.Metadata.Version.ToString();
         }
 
-        // From MoPlugin
+        // From IMoPlugin
         public String GetCompatibleGameVersion()
         {
             return COMPATIBLE_GAME_VERSION;

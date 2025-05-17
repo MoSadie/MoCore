@@ -6,12 +6,26 @@ using System.Threading;
 
 namespace MoCore
 {
+     /**
+      * <summary>
+      * A simple implementation of HttpListener to handle HTTP requests.
+      * 
+      * Checks the path and attempts to pass the request to the appropriate handler (registered via MoCore).
+      * </summary>
+      */
     internal class HTTPServerThread
     {
         private HttpListener httpListener;
 
         private Thread thread = null;
 
+        /**
+         * <summary>
+         * Prepare a new instance of HTTPServerThread.
+         * You will need to call <see cref="StartListening"/> to start the server.
+         * </summary>
+         * <param name="port">The port to listen on.</param>
+         */
         internal HTTPServerThread(int port)
         {
             httpListener = new HttpListener();
@@ -19,6 +33,11 @@ namespace MoCore
             httpListener.Prefixes.Add($"http://127.0.0.1:{port}/");
         }
 
+         /**
+          * <summary>
+          * Starts the HTTP server thread.
+          * </summary>
+          */
         internal void StartListening()
         {
             try
@@ -38,6 +57,13 @@ namespace MoCore
             }
         }
 
+        /**
+         * <summary>
+         * The main loop of the HTTP server thread.
+         * ONLY CALLED FROM THE NEW SERVER THREAD.
+         * </summary>
+         * <param name="httpListener">The HttpListener instance to use.</param>
+         */
         private void StartThread(HttpListener httpListener)
         {
             try

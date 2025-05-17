@@ -11,7 +11,7 @@ namespace MoCore
      */
     internal class MoCoreHttpHandler : IMoHttpHandler
     {
-        private MoCore moCore;
+        private readonly MoCore moCore;
 
         public MoCoreHttpHandler(MoCore moCore)
         {
@@ -26,10 +26,10 @@ namespace MoCore
         public System.Net.HttpListenerResponse HandleRequest(System.Net.HttpListenerRequest request, System.Net.HttpListenerResponse response)
         {
             // paths:
-            // mocore/version
-            // mocore/plugins
-            // mocore/plugin/{pluginGUID}
-            // mocore/variable/parse?string={message}
+            // mocore/version - info on MoCore version
+            // mocore/plugins - list of all registered plugins
+            // mocore/plugin/{pluginGUID} - info on a specific plugin
+            // mocore/variable/parse?string={message} - parse a message with variables
 
             string path = request.Url.AbsolutePath.Trim('/');
             string[] parts = path.Split('/');
