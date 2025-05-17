@@ -6,7 +6,7 @@ namespace MoCore
     internal class VariableHandler
     {
         /**
-         * Return the parsed version of the string, or null if we were unable to.
+         * <returns>The parsed version of the string, or null if we were unable to.</returns>
          */
         public static string ParseVariables(string message)
         {

@@ -26,7 +26,7 @@ namespace MoCore
          * <param name="request">The request that was made.</param>
          * <param name="response">The response that will be sent back. You do not need to close the response object, that will be handled for you.</param>
          * 
-         * <returns>The response, after the handler is done writing to it. </returns>
+         * <returns>The <paramref name="response"/>, after the handler is done writing to it. </returns>
          */
         public HttpListenerResponse HandleRequest(HttpListenerRequest request, HttpListenerResponse response);
     }

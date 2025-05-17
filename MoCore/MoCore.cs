@@ -84,11 +84,10 @@ namespace MoCore
          * 
          * </summary>
          * <param name="plugin">The plugin to register</param>
-         * <param name="skipVersionCheck">If true, skip the version check.</param>
          * 
          * <returns>true if plugin registered correctly, false otherwise. (If false: continuing to load plugin may lead to issues)</returns>
          */
-        public static bool RegisterPlugin(IMoPlugin plugin, bool skipVersionCheck = false)
+        public static bool RegisterPlugin(IMoPlugin plugin)
         {
             if (plugin == null)
             {
@@ -106,7 +105,7 @@ namespace MoCore
             Log.LogInfo($"Registering plugin {PluginName(plugin)} ({PluginId(plugin)})");
             Log.LogInfo($"Version: {PluginVersion(plugin)}");
 
-            if (overrideVersionCheck.Value || skipVersionCheck)
+            if (overrideVersionCheck.Value)
             {
                 Log.LogWarning("Version check override is enabled. Skipping version check.");
                 plugins.Add(plugin);
@@ -119,10 +118,24 @@ namespace MoCore
                 {
                     return false;
                 }
+
+                Log.LogInfo($"Plugin {PluginName(plugin)} ({PluginId(plugin)}) is compatible with this version of the game ({Application.version}).");
+            }
+            else if (plugin.GetCompatibleGameVersion() != null)
+            {
+                if (!plugin.GetCompatibleGameVersion().Equals(Application.version))
+                {
+                    Log.LogError($"Plugin {PluginName(plugin)} ({PluginId(plugin)}) is not compatible with this ({Application.version} version of the game. (Expected version: {plugin.GetCompatibleGameVersion()})");
+                    return false;
+                }
+            }
+            else
+            {
+                Log.LogInfo($"Plugin {PluginName(plugin)} ({PluginId(plugin)}) did not provide a version check URL or compatible game version. Skipping version check.");
             }
 
 
-            Log.LogInfo($"Plugin {PluginName(plugin)} ({PluginId(plugin)}) is compatible with this version of the game ({Application.version}).");
+
             plugins.Add(plugin);
             return RegisterHttpHandler(plugin);
         }
