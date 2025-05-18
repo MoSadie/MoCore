@@ -59,6 +59,28 @@ namespace MoCore
 
         /**
          * <summary>
+         * Stops the HTTP server thread.
+         * </summary>
+         */
+        internal void StopListening()
+        {
+            try
+            {
+                if (httpListener == null || thread == null)
+                {
+                    MoCore.Log.LogError("HTTP server thread is not running.");
+                    return;
+                }
+                httpListener.Stop();
+            }
+            catch (Exception e)
+            {
+                MoCore.Log.LogError($"Failed to stop HTTP server thread: {e.Message}");
+            }
+        }
+
+        /**
+         * <summary>
          * The main loop of the HTTP server thread.
          * ONLY CALLED FROM THE NEW SERVER THREAD.
          * </summary>

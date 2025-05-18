@@ -1,3 +1,7 @@
+# v2.0.1
+
+Forgot to add a shutdown method to the HTTP server, so it can be properly disposed of when the game exits. Not sure if this is needed, but it doesn't hurt to have it.
+
 # v2.0.0
 
 Added two new features to MoCore:

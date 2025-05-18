@@ -63,6 +63,8 @@ namespace MoCore
 
                 moCoreHttpHandler = new MoCoreHttpHandler(this);
 
+                Application.quitting += ApplicationQuitting;
+
                 // Register ourselves! (Note: Your plugin should do this first thing in Awake, but MoCore does this later since we need to setup the registration system first)
                 IsSafe = RegisterPlugin(this);
 
@@ -74,6 +76,16 @@ namespace MoCore
                 Log.LogError($"An error occurred during plugin startup: {e.Message}");
             }
 
+        }
+
+        private void ApplicationQuitting()
+        {
+            if (httpServerThread != null)
+            {
+                Log.LogInfo("Application is quitting. Stopping HTTP server thread.");
+                httpServerThread.StopListening();
+                httpServerThread = null;
+            }
         }
 
         /**
