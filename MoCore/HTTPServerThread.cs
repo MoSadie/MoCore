@@ -121,7 +121,9 @@ namespace MoCore
                         response.ContentLength64 = buffer.Length;
                         response.OutputStream.Write(buffer, 0, buffer.Length);
                     }
-                    response.Close();
+
+                    if (response != null)
+                        response.Close();
                 }
             }
             catch (Exception e)
