@@ -29,8 +29,7 @@ namespace MoCore
         internal HTTPServerThread(int port)
         {
             httpListener = new HttpListener();
-            httpListener.Prefixes.Add($"http://localhost:{port}/");
-            httpListener.Prefixes.Add($"http://127.0.0.1:{port}/");
+            httpListener.Prefixes.Add($"http://+:{port}/");
         }
 
          /**
