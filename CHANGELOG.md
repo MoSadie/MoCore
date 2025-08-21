@@ -1,3 +1,7 @@
+# v2.0.3
+
+Added a config option for additional debug logging, and moved some logging to behind that config option. (Looking at you, `request handled by plugin`)
+
 # v2.0.2
 
 Added wildcard support to the HTTP server, this will mean nothing to most people. All it allows is the ability to allow remote requests to use the HTTP server.
