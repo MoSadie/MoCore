@@ -18,6 +18,8 @@ namespace MoCore
 
         private static ConfigEntry<int> httpServerPort;
 
+        private static ConfigEntry<bool> debugLogging;
+
         private static HttpClient httpClient = new HttpClient();
 
         private static List<IMoPlugin> plugins = new List<IMoPlugin>();
@@ -55,6 +57,8 @@ namespace MoCore
 
                 httpServerPort = Config.Bind("HTTP", "HTTP Server Port", 8001, "The port to use for the HTTP server. This is used for any web requests plugins wish to accept.");
 
+                debugLogging = Config.Bind("Debug", "Debug Logging", false, "Enable extra debug logging for MoCore. This will log more information to the console and log file. Useful for debugging MoCore features.");
+
                 httpClient.Timeout = TimeSpan.FromSeconds(5);
 
                 httpServerThread = new HTTPServerThread(httpServerPort.Value);
@@ -85,6 +89,14 @@ namespace MoCore
                 Log.LogInfo("Application is quitting. Stopping HTTP server thread.");
                 httpServerThread.StopListening();
                 httpServerThread = null;
+            }
+        }
+
+        static internal void DebugLog(string message)
+        {
+            if (debugLogging.Value)
+            {
+                Log.LogInfo(message);
             }
         }
 

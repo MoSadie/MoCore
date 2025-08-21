@@ -102,19 +102,19 @@ namespace MoCore
 
                     string prefix = path.Split('/')[0];
 
-                    MoCore.Log.LogInfo($"HTTP request received: Prefix:{prefix} {path}");
+                    MoCore.DebugLog($"HTTP request received: Prefix:{prefix} {path}");
 
                     Dictionary<string, IMoHttpHandler> handlers = MoCore.GetHttpHandlers();
 
                     if (handlers.ContainsKey(prefix))
                     {
                         IMoHttpHandler handler = handlers[prefix];
-                        MoCore.Log.LogInfo($"HTTP request handled by {handler.GetPrefix()}");
+                        MoCore.DebugLog($"HTTP request handled by {handler.GetPrefix()}");
                         response = handler.HandleRequest(request, response);
                     }
                     else
                     {
-                        MoCore.Log.LogDebug($"HTTP request not handled");
+                        MoCore.DebugLog($"HTTP request not handled");
                         response.StatusCode = 404;
                         byte[] buffer = Encoding.UTF8.GetBytes("Not Found");
                         response.ContentLength64 = buffer.Length;
